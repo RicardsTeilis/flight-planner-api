@@ -1,29 +1,40 @@
-﻿using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using WebApi.Entities;
+using WebApi.Helpers;
 
-namespace FlightPlanner.Services
+namespace WebApi.Services
 {
-    public class UserService : UserService.IUserService
+    public interface IUserService
     {
-        public interface IUserService
+        Task<User> Authenticate(string username, string password);
+        Task<IEnumerable<User>> GetAll();
+    }
+
+    public class UserService : IUserService
+    {
+        // users hardcoded for simplicity, store in a db with hashed passwords in production applications
+        private List<User> _users = new List<User>
         {
-            Task<User> Authenticate(string username, string password);
-        }
-        
-        public class User
-        {        
-            public string Id { get; internal set; }
-            public string Username { get; internal set; }
-            public string Password { get; internal set; }
-        }
+            new User { Id = 1, FirstName = "Test", LastName = "User", Username = "codelex-admin", Password = "Password123" }
+        };
 
         public async Task<User> Authenticate(string username, string password)
         {
-            if (username == "codelex-admin" && password == "Password123")
-            {
-                return new User {Id = "1", Username = "Bobby"};
-            }
+            var user = await Task.Run(() => _users.SingleOrDefault(x => x.Username == username && x.Password == password));
 
-            return null;
+            // return null if user not found
+            if (user == null)
+                return null;
+
+            // authentication successful so return user details without password
+            return user.WithoutPassword();
+        }
+
+        public async Task<IEnumerable<User>> GetAll()
+        {
+            return await Task.Run(() => _users.WithoutPasswords());
         }
     }
 }
