@@ -12,6 +12,8 @@ namespace FlightPlanner.Controllers
         public IActionResult Clear()
         {
             FlightsStorage.ClearFlightsList();
+            AirportsStorage.ClearAirportsList();
+            
             return Ok();
         }
     }

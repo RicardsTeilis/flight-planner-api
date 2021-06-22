@@ -65,15 +65,13 @@ namespace FlightPlanner.Controllers
             var added = FlightsStorage.AddFlight(flight);
             
             return Created("", added);
-
         }
 
         [HttpDelete]
         [Route("{id:int}")]
-        public IActionResult DeleteFlightRequest(int id)
+        public void DeleteFlightRequest(int id)
         {
             FlightsStorage.DeleteFlight(id);
-            return Ok();
         }
     }
 }

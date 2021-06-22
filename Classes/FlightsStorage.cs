@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using FlightPlanner.Models;
 
 namespace FlightPlanner.Classes
@@ -30,6 +31,21 @@ namespace FlightPlanner.Classes
             return Flights.Exists(i => i.Id == id) ? Flights.Find(i => i.Id == id) : null;
         }
 
+        public static Flight SearchFlight(SearchFlightsRequest search)
+        {
+            if (Flights.Any(i => i.From.AirportCode == search.From &&
+                                      i.To.AirportCode == search.To &&
+                                      i.DepartureTime.Substring(0,10) == search.DepartureDate))
+            {
+                var flight = Flights.FirstOrDefault(i => i.From.AirportCode == search.From &&
+                                                         i.To.AirportCode == search.To &&
+                                                         i.DepartureTime.Substring(0,10) == search.DepartureDate);
+                return flight;
+            }
+
+            return null;
+        }
+
         public static Flight AddFlight(AddFlightRequest newFlight)
         {
             var flight = new Flight
@@ -51,10 +67,9 @@ namespace FlightPlanner.Classes
                 DepartureTime = newFlight.DepartureTime,
                 ArrivalTime = newFlight.ArrivalTime
             };
-            
+
             Flights.Add(flight);
             _flightId++;
-            
             return flight;
         }
 
@@ -114,18 +129,15 @@ namespace FlightPlanner.Classes
             return false;
         }
 
-        public static bool DeleteFlight(int id)
+        public static void DeleteFlight(int id)
         {
-            var flight = GetFlightById(id);
-            var isFlightInList = Flights.Contains(flight);
+            var isFlightInList = Flights.Any(i => i.Id == id);
 
             if (isFlightInList)
             {
+                var flight = GetFlightById(id);
                 Flights.Remove(flight);
-                return true;
             }
-
-            return false;
         }
     }
 }
