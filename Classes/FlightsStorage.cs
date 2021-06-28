@@ -9,6 +9,7 @@ namespace FlightPlanner.Classes
     {
         private static readonly List<Flight> Flights;
         private static int _flightId;
+        private static readonly object FlightsLock = new();
 
         static FlightsStorage()
         {
@@ -33,44 +34,50 @@ namespace FlightPlanner.Classes
 
         public static Flight SearchFlight(SearchFlightsRequest search)
         {
-            if (Flights.Any(i => i.From.AirportCode == search.From &&
-                                      i.To.AirportCode == search.To &&
-                                      i.DepartureTime.Substring(0,10) == search.DepartureDate))
+            lock (FlightsLock)
             {
-                var flight = Flights.FirstOrDefault(i => i.From.AirportCode == search.From &&
-                                                         i.To.AirportCode == search.To &&
-                                                         i.DepartureTime.Substring(0,10) == search.DepartureDate);
-                return flight;
-            }
+                if (Flights.Any(i => i.From.AirportCode == search.From &&
+                                     i.To.AirportCode == search.To &&
+                                     i.DepartureTime.Substring(0,10) == search.DepartureDate))
+                {
+                    var flight = Flights.FirstOrDefault(i => i.From.AirportCode == search.From &&
+                                                             i.To.AirportCode == search.To &&
+                                                             i.DepartureTime.Substring(0,10) == search.DepartureDate);
+                    return flight;
+                }
 
-            return null;
+                return null; 
+            }
         }
 
         public static Flight AddFlight(AddFlightRequest newFlight)
         {
-            var flight = new Flight
+            lock (FlightsLock)
             {
-                Id = _flightId,
-                From = new Airport
+                var flight = new Flight
                 {
-                    Country = newFlight.From.Country,
-                    City = newFlight.From.City,
-                    AirportCode = newFlight.From.AirportCode
-                },
-                To = new Airport
-                {
-                    Country = newFlight.To.Country,
-                    City = newFlight.To.City,
-                    AirportCode = newFlight.To.AirportCode
-                },
-                Carrier = newFlight.Carrier,
-                DepartureTime = newFlight.DepartureTime,
-                ArrivalTime = newFlight.ArrivalTime
-            };
+                    Id = _flightId,
+                    From = new Airport
+                    {
+                        Country = newFlight.From.Country,
+                        City = newFlight.From.City,
+                        AirportCode = newFlight.From.AirportCode
+                    },
+                    To = new Airport
+                    {
+                        Country = newFlight.To.Country,
+                        City = newFlight.To.City,
+                        AirportCode = newFlight.To.AirportCode
+                    },
+                    Carrier = newFlight.Carrier,
+                    DepartureTime = newFlight.DepartureTime,
+                    ArrivalTime = newFlight.ArrivalTime
+                };
 
-            Flights.Add(flight);
-            _flightId++;
-            return flight;
+                Flights.Add(flight);
+                _flightId++;
+                return flight;
+            }
         }
 
         public static bool IsValidFlight(AddFlightRequest flight)
@@ -100,23 +107,26 @@ namespace FlightPlanner.Classes
 
         public static bool IsInFlightsList(AddFlightRequest newFlight)
         {
-            foreach (var flight in Flights)
+            lock (FlightsLock)
             {
-                if (flight.From.AirportCode == newFlight.From.AirportCode &&
-                    flight.From.Country == newFlight.From.Country &&
-                    flight.From.City == newFlight.From.City &&
-                    flight.To.AirportCode == newFlight.To.AirportCode &&
-                    flight.To.Country == newFlight.To.Country &&
-                    flight.To.City == newFlight.To.City &&
-                    flight.Carrier == newFlight.Carrier &&
-                    flight.DepartureTime == newFlight.DepartureTime &&
-                    flight.ArrivalTime == newFlight.ArrivalTime)
+                foreach (var flight in Flights)
                 {
-                    return true;
+                    if (flight.From.AirportCode == newFlight.From.AirportCode &&
+                        flight.From.Country == newFlight.From.Country &&
+                        flight.From.City == newFlight.From.City &&
+                        flight.To.AirportCode == newFlight.To.AirportCode &&
+                        flight.To.Country == newFlight.To.Country &&
+                        flight.To.City == newFlight.To.City &&
+                        flight.Carrier == newFlight.Carrier &&
+                        flight.DepartureTime == newFlight.DepartureTime &&
+                        flight.ArrivalTime == newFlight.ArrivalTime)
+                    {
+                        return true;
+                    }
                 }
-            }
 
-            return false;
+                return false;
+            }
         }
 
         public static bool IsStrangeDate(AddFlightRequest flight)
@@ -131,12 +141,14 @@ namespace FlightPlanner.Classes
 
         public static void DeleteFlight(int id)
         {
-            var isFlightInList = Flights.Any(i => i.Id == id);
-
-            if (isFlightInList)
+            lock (FlightsLock)
             {
                 var flight = GetFlightById(id);
-                Flights.Remove(flight);
+
+                if (flight != null)
+                {
+                    Flights.Remove(flight);
+                }
             }
         }
     }
