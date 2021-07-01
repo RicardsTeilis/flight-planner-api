@@ -1,9 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using FlightPlanner.Classes;
-using FlightPlanner.Models;
+using FlightPlanner.DbContext;
+using FlightPlanner.DbModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using AddFlightRequest = FlightPlanner.DbModels.AddFlightRequest;
 
 namespace FlightPlanner.Controllers
 {
@@ -13,58 +17,103 @@ namespace FlightPlanner.Controllers
     [SuppressMessage("ReSharper", "CA1822")]
     public class AdminApiController : ControllerBase
     {
-        [HttpGet]
-        public List<Flight> ReturnFlights()
+
+        private readonly FlightPlannerDbContext _context;
+
+        public AdminApiController(FlightPlannerDbContext context)
         {
-            return FlightsStorage.GetFlights();
+            _context = context;
+        }
+        
+        [HttpGet]
+        public DbSet<Flight> ReturnFlights()
+        {
+            var flights = _context.Flights;
+            
+            return flights;
         }
         
         [HttpGet]
         [Route("{id:int}")]
         public ActionResult<Flight> ReturnFlight(int id)
         {
-            var flight = FlightsStorage.GetFlightById(id);
-
+            var flight = _context.Flights.FirstOrDefault(f => f.Id == id);
+            
             if (flight != null)
             {
                 return flight;
             }
+
+            return NotFound();
+            
+            /*var flight = FlightsStorage.GetFlightById(id);
+
+            if (flight != null)
+            {
+                return flight;
+            }*/
             
             return NotFound();
         }
 
         [HttpPut]
-        public IActionResult AddFlightRequest(AddFlightRequest flight)
+        public IActionResult AddFlightRequest(AddFlightRequest request)
         {
-            if (!FlightsStorage.IsValidFlight(flight))
+            // done
+            if (!FlightsStorage.IsValidFlight(request))
             {
                 return BadRequest();
             }
 
-            if (FlightsStorage.IsSameAirport(flight))
+            // done
+            if (FlightsStorage.IsSameAirport(request))
             {
                 return BadRequest();
             }
 
-            if (FlightsStorage.IsStrangeDate(flight))
+            // done
+            if (FlightsStorage.IsStrangeDate(request))
             {
                 return BadRequest();
             }
             
-            if (FlightsStorage.IsInFlightsList(flight))
+            if (FlightsStorage.IsInFlightsList(request))
             {
-                return Conflict(flight);
+                return Conflict(request);
             }
 
-            var fromAirport = flight.From;
+            /*var fromAirport = request.From;
             AirportsStorage.AddAirport(fromAirport);
             
-            var toAirport = flight.To;
-            AirportsStorage.AddAirport(toAirport);
+            var toAirport = request.To;
+            AirportsStorage.AddAirport(toAirport);*/
+
+            // var added = FlightsDbStorage.AddFlight(flight);
             
-            var added = FlightsStorage.AddFlight(flight);
+            var flight = new Flight
+            {
+                From = new Airport
+                {
+                    Country = request.From.Country,
+                    City = request.From.City,
+                    AirportCode = request.From.AirportCode
+                },
+                To = new Airport
+                {
+                    Country = request.To.Country,
+                    City = request.To.City,
+                    AirportCode = request.To.AirportCode
+                },
+                DepartureTime = request.DepartureTime,
+                ArrivalTime = request.ArrivalTime,
+                Carrier = request.Carrier
+            };
+
+            _context.Add(flight);
+
+            _context.SaveChanges();
             
-            return Created("", added);
+            return Created("", flight);
         }
 
         [HttpDelete]

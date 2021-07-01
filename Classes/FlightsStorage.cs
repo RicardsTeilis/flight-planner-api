@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using FlightPlanner.Models;
+using FlightPlanner.DbContext;
+using FlightPlanner.DbModels;
 
 namespace FlightPlanner.Classes
 {
-    public static class FlightsStorage
+    public class FlightsStorage
     {
         private static readonly List<Flight> Flights;
         private static int _flightId;
@@ -76,6 +77,7 @@ namespace FlightPlanner.Classes
 
                 Flights.Add(flight);
                 _flightId++;
+                
                 return flight;
             }
         }

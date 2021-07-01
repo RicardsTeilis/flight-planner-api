@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using FlightPlanner.Models;
+using FlightPlanner.DbModels;
 
 namespace FlightPlanner.Classes
 {

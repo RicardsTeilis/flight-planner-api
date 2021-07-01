@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using FlightPlanner.Classes;
-using FlightPlanner.Models;
+using FlightPlanner.DbModels;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Array = System.Array;
 using PageResult = FlightPlanner.Models.PageResult;
 
 namespace FlightPlanner.Controllers
