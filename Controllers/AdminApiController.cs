@@ -17,7 +17,6 @@ namespace FlightPlanner.Controllers
     [SuppressMessage("ReSharper", "CA1822")]
     public class AdminApiController : ControllerBase
     {
-
         private readonly FlightPlannerDbContext _context;
 
         public AdminApiController(FlightPlannerDbContext context)
@@ -118,9 +117,17 @@ namespace FlightPlanner.Controllers
 
         [HttpDelete]
         [Route("{id:int}")]
-        public void DeleteFlightRequest(int id)
+        public IActionResult DeleteFlightRequest(int id)
         {
-            FlightsStorage.DeleteFlight(id);
+            var flight = _context.Flights.FirstOrDefault(f => f.Id == id);
+            
+            if (flight != null)
+            {
+                _context.Flights.Remove(flight);
+                _context.SaveChanges();
+            }
+
+            return Ok();
         }
     }
 }
